@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e0e0e" media="(prefers-color-scheme: dark)">
+  <title>Glyphs</title>
+  <meta name="description" content="Turn any picture into a quiet, flat app icon: one line weight, one colour, your presets.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Glyphs">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- Apply the saved appearance before first paint (no flash of the wrong theme). -->
+  <script>try{var p=JSON.parse(localStorage.getItem('sg:prefs')||'{}');for(var k in p)document.documentElement.setAttribute('data-'+k,p[k])}catch(e){}</script>
+
+  <link rel="preload" href="styleguide/fonts/archivo-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styleguide/styleguide.min.css">
+  <link rel="stylesheet" href="styleguide/icons.css">
+  <link rel="stylesheet" href="app.css">
+  <script src="styleguide/styleguide.min.js" defer></script>
+  <script src="engine.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#controls">Skip to controls</a>
+
+  <div class="app safe-top" data-wide>
+    <header class="appbar sticky-top" id="bar">
+      <h1 class="appbar__title">Glyphs</h1>
+      <div class="appbar__end">
+        <button class="btn" data-shape="circle" data-size="sm" type="button" id="add" aria-label="Add pictures"><span class="ic ic--upload" aria-hidden="true"></span></button>
+        <button class="btn" data-shape="circle" data-size="sm" type="button" id="install" aria-label="Install Glyphs" hidden><span class="ic ic--smartphone" aria-hidden="true"></span></button>
+        <button class="btn" data-shape="circle" data-size="sm" type="button" data-sg-open="#look" aria-label="Appearance"><span class="ic ic--palette" aria-hidden="true"></span></button>
+      </div>
+    </header>
+
+    <main class="app__main studio" id="main" tabindex="-1">
+      <!-- The stage: what you are making. It stays in view while the controls scroll. -->
+      <section class="stage" aria-label="Preview">
+        <div class="stage__frame" id="drop">
+          <canvas id="view" class="stage__canvas" width="640" height="640" tabindex="0"
+                  role="img" aria-label="Icon preview"
+                  aria-describedby="view-help"></canvas>
+        </div>
+        <p class="t-meta stage__help" id="view-help">Drag to move, pinch or use two fingers to resize. With the arrow keys: nudge; Shift: bigger steps; plus and minus: size.</p>
+        <button class="btn" data-size="sm" type="button" id="suggest" data-act="use-solid" hidden><span class="ic ic--wand-sparkles" aria-hidden="true"></span>This is already line art. Draw it solid</button>
+        <div class="stage__bar">
+          <p class="t-meta num stage__readout" id="readout" aria-live="off"></p>
+          <div class="cluster" data-gap="2">
+            <button class="btn" data-size="sm" type="button" id="undo" aria-label="Undo" disabled><span class="ic ic--undo-2" aria-hidden="true"></span></button>
+            <button class="btn" data-size="sm" type="button" id="redo" aria-label="Redo" disabled><span class="ic ic--redo-2" aria-hidden="true"></span></button>
+          </div>
+        </div>
+        <div class="reel" id="reel-wrap" hidden>
+          <p class="t-label" id="reel-label">Pictures</p>
+          <ul class="reel__list" id="reel" role="list" aria-labelledby="reel-label"></ul>
+        </div>
+      </section>
+
+      <!-- The controls. -->
+      <section class="panel" id="controls" tabindex="-1" aria-label="Controls">
+        <div class="tabs" data-sg-tabs id="tabs">
+          <div class="tabs__bar">
+            <div class="tabs__list" role="tablist" aria-label="Controls">
+              <button class="tabs__tab" role="tab" type="button" id="t-shape" aria-selected="true" aria-controls="p-shape">Shape</button>
+              <button class="tabs__tab" role="tab" type="button" id="t-style" aria-selected="false" aria-controls="p-style" tabindex="-1">Line</button>
+              <button class="tabs__tab" role="tab" type="button" id="t-layout" aria-selected="false" aria-controls="p-layout" tabindex="-1">Place</button>
+              <button class="tabs__tab" role="tab" type="button" id="t-colour" aria-selected="false" aria-controls="p-colour" tabindex="-1">Colour</button>
+              <button class="tabs__tab" role="tab" type="button" id="t-presets" aria-selected="false" aria-controls="p-presets" tabindex="-1">Presets</button>
+            </div>
+          </div>
+          <div class="tabs__panel" role="tabpanel" id="p-shape" aria-labelledby="t-shape" tabindex="0"></div>
+          <div class="tabs__panel" role="tabpanel" id="p-style" aria-labelledby="t-style" tabindex="0" hidden></div>
+          <div class="tabs__panel" role="tabpanel" id="p-layout" aria-labelledby="t-layout" tabindex="0" hidden></div>
+          <div class="tabs__panel" role="tabpanel" id="p-colour" aria-labelledby="t-colour" tabindex="0" hidden></div>
+          <div class="tabs__panel" role="tabpanel" id="p-presets" aria-labelledby="t-presets" tabindex="0" hidden></div>
+        </div>
+
+        <section class="card preview-card" aria-labelledby="pv-t">
+          <header class="card__bar"><h2 class="card__label" id="pv-t">On a home screen</h2></header>
+          <div class="card__body">
+            <div class="homes" id="homes">
+              <figure class="home"><canvas width="240" height="240" data-home="120"></canvas><figcaption class="t-meta">Large</figcaption></figure>
+              <figure class="home"><canvas width="120" height="120" data-home="60"></canvas><figcaption class="t-meta">Home</figcaption></figure>
+              <figure class="home"><canvas width="80" height="80" data-home="40"></canvas><figcaption class="t-meta">Search</figcaption></figure>
+              <figure class="home"><canvas width="58" height="58" data-home="29"></canvas><figcaption class="t-meta">Small</figcaption></figure>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <!-- Save: the one primary action, always in reach. -->
+    <nav class="savebar safe-bottom" aria-label="Save">
+      <button class="btn" data-variant="primary" type="button" id="save"><span class="ic ic--download" aria-hidden="true"></span><span id="save-label">Save PNG</span></button>
+      <button class="btn" type="button" data-sg-open="#export"><span class="ic ic--sliders-horizontal" aria-hidden="true"></span>Export options</button>
+    </nav>
+  </div>
+
+  <input type="file" id="file" accept="image/*" multiple hidden>
+  <input type="file" id="import" accept="application/json,.json" hidden>
+
+  <!-- Export options -->
+  <dialog class="sheet card" id="export" aria-labelledby="export-t">
+    <header class="card__bar">
+      <h2 class="card__label" id="export-t">Export</h2>
+      <button class="card__ctl" type="button" data-sg-close aria-label="Close"><span class="ic ic--x" aria-hidden="true"></span></button>
+    </header>
+    <div class="card__body stack" data-gap="5">
+      <fieldset class="stack" data-gap="2">
+        <legend class="t-label">Size</legend>
+        <div class="chips">
+          <label class="chip"><input class="chip__input" type="radio" name="x-size" value="1024" checked>1024</label>
+          <label class="chip"><input class="chip__input" type="radio" name="x-size" value="512">512</label>
+          <label class="chip"><input class="chip__input" type="radio" name="x-size" value="180">180</label>
+          <label class="chip"><input class="chip__input" type="radio" name="x-size" value="120">120</label>
+        </div>
+        <p class="t-meta">Pixels on a side. 1024 is what an app store wants; 180 is a Home Screen icon.</p>
+      </fieldset>
+      <fieldset class="stack" data-gap="2">
+        <legend class="t-label">Which pictures</legend>
+        <div class="chips">
+          <label class="chip"><input class="chip__input" type="radio" name="x-which" value="current" checked>This one</label>
+          <label class="chip"><input class="chip__input" type="radio" name="x-which" value="all">All of them</label>
+        </div>
+      </fieldset>
+      <label class="switch">
+        <input type="checkbox" role="switch" id="x-flat">
+        <span class="switch__label">Flatten onto the background<span class="switch__hint">Fills any see-through corners. iOS wants an opaque icon.</span></span>
+        <span class="switch__state" aria-hidden="true"><span data-on>On</span><span data-off>Off</span></span>
+      </label>
+    </div>
+    <div class="dialog__actions">
+      <button class="btn" type="button" data-sg-close>Close</button>
+      <button class="btn" data-variant="primary" type="button" id="export-go" data-sg-close><span class="ic ic--download" aria-hidden="true"></span>Save</button>
+    </div>
+  </dialog>
+
+  <!-- Appearance of the app itself -->
+  <dialog class="sheet card" id="look" aria-labelledby="look-t">
+    <header class="card__bar">
+      <h2 class="card__label" id="look-t">Appearance</h2>
+      <button class="card__ctl" type="button" data-sg-close aria-label="Close"><span class="ic ic--x" aria-hidden="true"></span></button>
+    </header>
+    <div class="card__body stack" data-gap="5">
+      <fieldset class="stack" data-gap="2">
+        <legend class="t-label">Theme</legend>
+        <fieldset class="segmented" data-block>
+          <legend class="sr-only">Theme</legend>
+          <label class="segmented__opt"><input type="radio" name="a-theme" value="system" checked><span class="segmented__label">Device</span></label>
+          <label class="segmented__opt"><input type="radio" name="a-theme" value="light"><span class="segmented__label">Light</span></label>
+          <label class="segmented__opt"><input type="radio" name="a-theme" value="dark"><span class="segmented__label">Dark</span></label>
+        </fieldset>
+      </fieldset>
+      <fieldset class="stack" data-gap="2">
+        <legend class="t-label">Corners</legend>
+        <fieldset class="segmented" data-block>
+          <legend class="sr-only">Corners</legend>
+          <label class="segmented__opt"><input type="radio" name="a-corners" value="square" checked><span class="segmented__label">Square</span></label>
+          <label class="segmented__opt"><input type="radio" name="a-corners" value="soft"><span class="segmented__label">Soft</span></label>
+        </fieldset>
+      </fieldset>
+      <label class="switch">
+        <input type="checkbox" role="switch" id="a-contrast">
+        <span class="switch__label">Higher contrast</span>
+        <span class="switch__state" aria-hidden="true"><span data-on>On</span><span data-off>Off</span></span>
+      </label>
+    </div>
+  </dialog>
+
+  <!-- Name a preset -->
+  <dialog class="dialog card" id="name-dlg" aria-labelledby="name-t">
+    <header class="card__bar"><p class="card__label">Preset</p></header>
+    <form method="dialog" id="name-form">
+      <div class="card__body stack" data-gap="3">
+        <h2 class="card__title" id="name-t">Name this preset</h2>
+        <div class="field">
+          <label class="field__label" for="name-in">Name</label>
+          <input class="input" id="name-in" name="name" type="text" maxlength="40" autocomplete="off" required enterkeyhint="done">
+        </div>
+      </div>
+      <div class="dialog__actions">
+        <button class="btn" type="button" data-sg-close value="cancel">Cancel</button>
+        <button class="btn" data-variant="primary" type="submit" value="save">Save preset</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Confirm delete -->
+  <dialog class="dialog card" id="del-dlg" role="alertdialog" aria-labelledby="del-t" aria-describedby="del-d">
+    <header class="card__bar"><p class="card__label"><span class="ic ic--triangle-alert" aria-hidden="true"></span>Permanent</p></header>
+    <div class="card__body">
+      <h2 class="card__title" id="del-t">Delete this preset?</h2>
+      <p class="card__text" id="del-d">It is removed from this device. Icons you already saved are not touched.</p>
+    </div>
+    <div class="dialog__actions">
+      <button class="btn" type="button" data-sg-close value="cancel" autofocus>Cancel</button>
+      <button class="btn" data-variant="tone" data-tone="bad" type="button" data-sg-close value="delete" id="del-go">Delete preset</button>
+    </div>
+  </dialog>
+</body>
+</html>
